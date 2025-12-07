@@ -1,0 +1,155 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f1f3f6;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  height: 35px;
+}
+
+.logo h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.search-bar {
+  width: 40%;
+  padding: 8px;
+  border: none;
+  border-radius: 3px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;
+  font-weight: bold;
+}
+
+/* Categories */
+.categories {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: white;
+  padding: 10px 0;
+  flex-wrap: wrap;
+}
+
+.category {
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.category:hover {
+  transform: scale(1.05);
+}
+
+.category img {
+  width: 50px;
+  height: 50px;
+}
+
+.category p {
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Banner */
+.banner img {
+  width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+/* Offers */
+.offers {
+  background: white;
+  margin: 15px;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.offers h2 {
+  margin-bottom: 10px;
+  color: #28a745;
+}
+
+.offer-grid {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.offer-item {
+  width: 150px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.offer-item img {
+  width: 100%;
+  border-radius: 5px;
+  transition: transform 0.3s;
+}
+
+.offer-item img:hover {
+  transform: scale(1.05);
+}
+
+.offer-item p {
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* Footer */
+.footer {
+  background: #28a745;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+  }
+  .search-bar {
+    width: 90%;
+    margin: 10px 0;
+  }
+  .categories {
+    flex-wrap: wrap;
+  }
+  .offer-grid {
+    justify-content: center;
+  }
+}
