@@ -1,5 +1,9 @@
 <?php
 session_start();
 session_destroy();
-header("Location: admin_login.php");
 ?>
+
+<script>
+    alert("You have been successfully logged out!");
+    window.location.href = "farmer_login.php";
+</script>

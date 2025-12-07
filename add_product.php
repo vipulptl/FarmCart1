@@ -1,27 +1,58 @@
 <?php
 session_start();
-include '../db.php';
+require_once 'db.php';
+require_once 'farmer_home.php';
 
-if (!isset($_SESSION['admin'])) {
-    header("Location: admin_login.php");
+
+// ✅ Check if farmer is logged in
+if (!isset($_SESSION['f_id'])) {
+    header("Location: farmer_login.php");
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name  = $conn->real_escape_string($_POST['name']);
-    $price = $conn->real_escape_string($_POST['price']);
-    $cat   = $conn->real_escape_string($_POST['category']);
+$farmer_id = $_SESSION['f_id'];
+$message = "";
+$redirect = false; // Flag for redirect
 
-    $img_name = uniqid('product_') . '.' . pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-    $img_path = "../uploads/" . $img_name;
+// ✅ Handle product submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['p_name']);
+    $category = trim($_POST['category']);
+    $price_per_kg = floatval($_POST['price']);
+    $quantity = intval($_POST['quantity']);
+    $image = "";
 
-    move_uploaded_file($_FILES['image']['tmp_name'], $img_path);
+    // ✅ Image upload
+    if (!empty($_FILES['image']['name'])) {
+        $target_dir = "../uploads/";
+        $image = time() . "_" . basename($_FILES['image']['name']);
+        $target_file = $target_dir . $image;
 
-    $sql = "INSERT INTO products (name, price, category, image) VALUES ('$name', '$price', '$cat', '$img_name')";
-    if ($conn->query($sql)) {
-        echo "<div class='success'>✅ Product added successfully!</div>";
-    } else {
-        echo "<div class='error'>❌ Error: " . $conn->error . "</div>";
+        $file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (in_array($file_type, $allowed_types)) {
+            if (!move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+                $message = "❌ Failed to upload image.";
+            }
+        } else {
+            $message = "❌ Only JPG, JPEG, PNG & GIF files are allowed.";
+        }
+    }
+
+    // ✅ Insert into database if no errors
+    if (empty($message)) {
+        $sql = "INSERT INTO products (p_name, category, price, quantity, image, f_id) 
+                VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssdisi", $name, $category, $price_per_kg, $quantity, $image, $farmer_id);
+
+        if ($stmt->execute()) {
+            $message = "✅ Product added successfully! Redirecting...";
+            $redirect = true;
+        } else {
+            $message = "❌ Database Error: " . $conn->error;
+        }
     }
 }
 ?>
@@ -30,86 +61,126 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add Product - Admin</title>
+    <title>Add Product - Farmer Panel</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f3f3f3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .form-container {
-            background-color: white;
-            padding: 30px;
+        /* body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        } */
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 25px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
         h2 {
             text-align: center;
+            color: #2c3e50;
             margin-bottom: 20px;
-            color: #333;
         }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="file"],
-        button {
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            font-size: 14px;
         }
-
-        button {
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
+        input[type="file"] {
             border: none;
+        }
+        button {
+            width: 100%;
+            background: #27ae60;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
             cursor: pointer;
+            transition: 0.3s;
         }
-
         button:hover {
-            background-color: #218838;
+            background: #219150;
         }
-
-        .success, .error {
+        .message {
             text-align: center;
             margin-bottom: 15px;
-            font-weight: bold;
             padding: 10px;
             border-radius: 6px;
         }
-
         .success {
-            background-color: #d4edda;
+            background: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
-
         .error {
-            background-color: #f8d7da;
+            background: #f8d7da;
             color: #721c24;
+            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
 <body>
 
-<div class="form-container">
+<div class="container">
     <h2>Add New Product</h2>
 
+    <?php if (!empty($message)): ?>
+        <div class="message <?= strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
+            <?= $message; ?>
+        </div>
+    <?php endif; ?>
+
     <form method="POST" enctype="multipart/form-data">
-        <input type="text" name="name" placeholder="Product Name" required>
-        <input type="number" name="price" placeholder="Price (₹)" required>
-        <input type="text" name="category" placeholder="Category" required>
-        <input type="file" name="image" required>
+        <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" name="p_name" required>
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" required>
+                <option value="">Select Category</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Dry Fruits">Dry Fruits</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Price per kg (₹)</label>
+            <input type="number" name="price" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label>Available Quantity (kg)</label>
+            <input type="number" name="quantity" required>
+        </div>
+        <div class="form-group">
+            <label>Upload Image</label>
+            <input type="file" name="image" accept=".jpg,.jpeg,.png,.gif">
+        </div>
         <button type="submit">Add Product</button>
     </form>
 </div>
+
+<?php if ($redirect): ?>
+<script>
+    setTimeout(function() {
+        window.location.href = "farmer_products.php";
+    }, 3000); // Redirect after 3 seconds
+</script>
+<?php endif; ?>
 
 </body>
 </html>
